@@ -1,134 +1,84 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { PrismaClient } from '@prisma/client';
+import authRoutes from './routes/authRoutes.js';
+import { createCrudRouter } from './lib/crud.js';
+import { requireAuth } from './lib/auth.js';
 
-const prisma = new PrismaClient();
+if (!process.env.JWT_SECRET || !process.env.GOOGLE_CLIENT_ID) {
+  console.error('❌ Faltan variables de entorno. Copie .env.example a .env y complete JWT_SECRET y GOOGLE_CLIENT_ID.');
+  process.exit(1);
+}
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:4200' }));
 app.use(express.json());
 
+// --- AUTENTICACIÓN (pública) ---
+app.use('/api/auth', authRoutes);
+
+// --- A partir de aquí todas las rutas requieren sesión ---
+app.use('/api', requireAuth);
+
 // --- PACIENTES ---
-app.get('/api/patients', async (req, res) => {
-  try {
-    const patients = await prisma.patient.findMany({ orderBy: { id: 'desc' } });
-    res.json(patients);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener pacientes' });
-  }
-});
-
-app.post('/api/patients', async (req, res) => {
-  try {
-    const newPatient = await prisma.patient.create({
-      data: {
-        name: req.body.name,
-        age: Number(req.body.age),
-        phone: req.body.phone,
-        email: req.body.email || '',
-        gender: req.body.gender,
-        blood: req.body.blood || 'O+',
-        status: req.body.status || 'Activo'
-      }
-    });
-    res.status(201).json(newPatient);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al crear paciente' });
-  }
-});
-
-app.put('/api/patients/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updated = await prisma.patient.update({
-      where: { id: Number(id) },
-      data: {
-        name: req.body.name,
-        age: Number(req.body.age),
-        phone: req.body.phone,
-        email: req.body.email,
-        gender: req.body.gender,
-        blood: req.body.blood,
-        status: req.body.status
-      }
-    });
-    res.json(updated);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al actualizar paciente' });
-  }
-});
-
-app.delete('/api/patients/:id', async (req, res) => {
-  try {
-    await prisma.patient.delete({ where: { id: Number(req.params.id) } });
-    res.json({ success: true });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al eliminar paciente' });
-  }
-});
+app.use('/api/patients', createCrudRouter('patient', {
+  fullName: { type: 'string', required: true },
+  age: { type: 'int', required: true, min: 0 },
+  gender: { type: 'string', required: true, enum: ['Masculino', 'Femenino', 'Otro'] },
+  phone: { type: 'string', required: true },
+  bloodType: { type: 'string', enum: ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'] },
+  consultationFee: { type: 'float', min: 0 },
+  status: { type: 'string', enum: ['Activo', 'En Observación', 'Alta'] }
+}, 'Paciente'));
 
 // --- INVENTARIO ---
-app.get('/api/inventory', async (req, res) => {
-  try {
-    const inventory = await prisma.inventoryItem.findMany({ orderBy: { id: 'desc' } });
-    res.json(inventory);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener inventario' });
-  }
-});
-
-app.post('/api/inventory', async (req, res) => {
-  try {
-    const newItem = await prisma.inventoryItem.create({ data: req.body });
-    res.status(201).json(newItem);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al crear ítem de inventario' });
-  }
-});
+app.use('/api/inventory', createCrudRouter('inventoryItem', {
+  name: { type: 'string', required: true },
+  category: { type: 'string', required: true },
+  stock: { type: 'int', required: true, min: 0 },
+  minStock: { type: 'int', min: 0 },
+  unitPrice: { type: 'float', required: true, min: 0 },
+  supplier: { type: 'string', required: true },
+  expirationDate: { type: 'string', nullable: true }
+}, 'Ítem de inventario'));
 
 // --- CITAS ---
-app.get('/api/appointments', async (req, res) => {
-  try {
-    const appointments = await prisma.appointment.findMany({ orderBy: { id: 'desc' } });
-    res.json(appointments);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener citas' });
-  }
-});
-
-app.post('/api/appointments', async (req, res) => {
-  try {
-    const newAppt = await prisma.appointment.create({ data: req.body });
-    res.status(201).json(newAppt);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al crear cita' });
-  }
-});
+app.use('/api/appointments', createCrudRouter('appointment', {
+  patientName: { type: 'string', required: true },
+  doctorName: { type: 'string', required: true },
+  specialty: { type: 'string', required: true },
+  date: { type: 'string', required: true },
+  time: { type: 'string', required: true },
+  phone: { type: 'string', required: true },
+  fee: { type: 'float', min: 0 },
+  status: { type: 'string', enum: ['Confirmada', 'En Espera', 'Completada', 'Cancelada'] }
+}, 'Cita'));
 
 // --- FACTURACIÓN ---
-app.get('/api/invoices', async (req, res) => {
-  try {
-    const invoices = await prisma.invoice.findMany({ orderBy: { id: 'desc' } });
-    res.json(invoices);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener facturas' });
-  }
+app.use('/api/invoices', createCrudRouter('invoice', {
+  patientName: { type: 'string', required: true },
+  concept: { type: 'string', required: true },
+  amount: { type: 'float', required: true, min: 0 },
+  date: { type: 'string', required: true },
+  status: { type: 'string', enum: ['Pagada', 'Pendiente', 'Anulada'] }
+}, 'Factura'));
+
+// --- Ruta no encontrada ---
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Ruta no encontrada' });
 });
 
-app.post('/api/invoices', async (req, res) => {
-  try {
-    const newInvoice = await prisma.invoice.create({ data: req.body });
-    res.status(201).json(newInvoice);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al crear factura' });
+// --- Manejador global de errores (Express 5 captura también los errores async) ---
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'JSON inválido' });
   }
+  console.error(err);
+  res.status(500).json({ error: 'Error interno del servidor' });
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor profesional de MediFlow corriendo en el puerto ${PORT}`);
+  console.log(`🚀 Servidor de MediFlow corriendo en http://localhost:${PORT}`);
 });

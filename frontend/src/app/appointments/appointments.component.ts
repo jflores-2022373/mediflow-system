@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MediflowService, Appointment } from '../services/mediflow.service';
+import { apiErrorMessage, todayLocal } from '../config';
 
 @Component({
   selector: 'app-appointments',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [CommonModule, FormsModule],
   templateUrl: './appointments.component.html',
   styleUrls: ['./appointments.component.css']
@@ -18,16 +20,7 @@ export class AppointmentsComponent implements OnInit {
 
   appointments: Appointment[] = [];
 
-  newAppointment: Partial<Appointment> = {
-    patientName: '',
-    doctorName: '',
-    specialty: 'Medicina General',
-    date: '',
-    time: '',
-    phone: '',
-    fee: 0,
-    status: 'Confirmada'
-  };
+  newAppointment: Partial<Appointment> = {};
 
   constructor(private mediflowService: MediflowService) {}
 
@@ -36,7 +29,10 @@ export class AppointmentsComponent implements OnInit {
   }
 
   loadAppointments(): void {
-    this.appointments = this.mediflowService.getAppointments();
+    this.mediflowService.appointments.list().subscribe({
+      next: appointments => this.appointments = appointments,
+      error: err => alert(apiErrorMessage(err, 'No se pudieron cargar las citas.'))
+    });
   }
 
   get filteredAppointments(): Appointment[] {
@@ -44,7 +40,7 @@ export class AppointmentsComponent implements OnInit {
       return this.appointments;
     }
     const term = this.searchTerm.toLowerCase();
-    return this.appointments.filter(appt => 
+    return this.appointments.filter(appt =>
       appt.patientName.toLowerCase().includes(term) ||
       appt.doctorName.toLowerCase().includes(term) ||
       appt.specialty.toLowerCase().includes(term)
@@ -58,7 +54,7 @@ export class AppointmentsComponent implements OnInit {
       patientName: '',
       doctorName: '',
       specialty: 'Medicina General',
-      date: new Date().toISOString().split('T')[0],
+      date: todayLocal(),
       time: '10:00 AM',
       phone: '+502 ',
       fee: 0,
@@ -79,40 +75,31 @@ export class AppointmentsComponent implements OnInit {
   }
 
   saveAppointment(): void {
-    if (!this.newAppointment.patientName || !this.newAppointment.doctorName || !this.newAppointment.date) {
-      alert('Por favor complete los campos obligatorios (Paciente, Doctor y Fecha).');
+    const appt = this.newAppointment;
+    if (!appt.patientName?.trim() || !appt.doctorName?.trim() || !appt.date || !appt.time?.trim() || !appt.phone?.trim()) {
+      alert('Por favor complete los campos obligatorios (Paciente, Doctor, Fecha, Hora y Teléfono).');
       return;
     }
 
-    if (this.isEditMode && this.editingId !== null) {
-      const index = this.appointments.findIndex(a => a.id === this.editingId);
-      if (index !== -1) {
-        this.appointments[index] = { ...this.newAppointment } as Appointment;
-      }
-    } else {
-      const newId = this.appointments.length > 0 ? Math.max(...this.appointments.map(a => a.id)) + 1 : 1;
-      const appointmentToAdd: Appointment = {
-        id: newId,
-        patientName: this.newAppointment.patientName || '',
-        doctorName: this.newAppointment.doctorName || '',
-        specialty: this.newAppointment.specialty || 'Medicina General',
-        date: this.newAppointment.date || '',
-        time: this.newAppointment.time || '10:00 AM',
-        phone: this.newAppointment.phone || '+502 0000-0000',
-        fee: Number(this.newAppointment.fee) || 0,
-        status: (this.newAppointment.status as any) || 'Confirmada'
-      };
-      this.appointments.push(appointmentToAdd);
-    }
+    const request = this.isEditMode && this.editingId !== null
+      ? this.mediflowService.appointments.update(this.editingId, appt)
+      : this.mediflowService.appointments.create(appt);
 
-    this.mediflowService.saveAppointments(this.appointments);
-    this.closeModal();
+    request.subscribe({
+      next: () => {
+        this.closeModal();
+        this.loadAppointments();
+      },
+      error: err => alert(apiErrorMessage(err, 'No se pudo guardar la cita.'))
+    });
   }
 
   deleteAppointment(id: number): void {
     if (confirm('¿Está seguro de eliminar o cancelar esta cita?')) {
-      this.appointments = this.appointments.filter(a => a.id !== id);
-      this.mediflowService.saveAppointments(this.appointments);
+      this.mediflowService.appointments.remove(id).subscribe({
+        next: () => this.appointments = this.appointments.filter(a => a.id !== id),
+        error: err => alert(apiErrorMessage(err, 'No se pudo eliminar la cita.'))
+      });
     }
   }
 

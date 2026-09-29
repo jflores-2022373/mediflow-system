@@ -4,9 +4,11 @@
   "description": "Backend para MediFlow Clínica Médica",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js",
-    "postinstall": "prisma skills sync || exit 0"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",

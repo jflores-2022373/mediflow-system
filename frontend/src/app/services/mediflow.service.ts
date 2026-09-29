@@ -1,4 +1,7 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { API_URL } from '../config';
 
 export interface Patient {
   id: number;
@@ -31,7 +34,7 @@ export interface InventoryItem {
   minStock: number;
   unitPrice: number;
   supplier: string;
-  expirationDate?: string;
+  expirationDate?: string | null;
 }
 
 export interface Invoice {
@@ -43,59 +46,37 @@ export interface Invoice {
   status: 'Pagada' | 'Pendiente' | 'Anulada';
 }
 
+// Operaciones CRUD genéricas contra un recurso del backend
+class Resource<T extends { id: number }> {
+  constructor(private http: HttpClient, private url: string) {}
+
+  list(): Observable<T[]> {
+    return this.http.get<T[]>(this.url);
+  }
+  create(item: Partial<T>): Observable<T> {
+    return this.http.post<T>(this.url, item);
+  }
+  update(id: number, item: Partial<T>): Observable<T> {
+    return this.http.put<T>(`${this.url}/${id}`, item);
+  }
+  remove(id: number): Observable<unknown> {
+    return this.http.delete(`${this.url}/${id}`);
+  }
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class MediflowService {
-  private STORAGE_KEYS = {
-    patients: 'mediflow_patients',
-    appointments: 'mediflow_appointments',
-    inventory: 'mediflow_inventory',
-    invoices: 'mediflow_invoices'
-  };
+  readonly patients: Resource<Patient>;
+  readonly appointments: Resource<Appointment>;
+  readonly inventory: Resource<InventoryItem>;
+  readonly invoices: Resource<Invoice>;
 
-  getPatients(): Patient[] {
-    const data = localStorage.getItem(this.STORAGE_KEYS.patients);
-    return data ? JSON.parse(data) : [
-      { id: 1, fullName: 'Juan Pérez', age: 34, gender: 'Masculino', phone: '+502 5214-8965', bloodType: 'O+', consultationFee: 300.00, status: 'Activo' }
-    ];
-  }
-
-  savePatients(patients: Patient[]): void {
-    localStorage.setItem(this.STORAGE_KEYS.patients, JSON.stringify(patients));
-  }
-
-  getAppointments(): Appointment[] {
-    const data = localStorage.getItem(this.STORAGE_KEYS.appointments);
-    return data ? JSON.parse(data) : [
-      { id: 1, patientName: 'Carlos Mendoza', doctorName: 'Dr. Alejandro Estrada', specialty: 'Cardiología', date: '2026-06-10', time: '09:00 AM', phone: '+502 4512-7896', fee: 350.00, status: 'Confirmada' }
-    ];
-  }
-
-  saveAppointments(appointments: Appointment[]): void {
-    localStorage.setItem(this.STORAGE_KEYS.appointments, JSON.stringify(appointments));
-  }
-
-  getInventory(): InventoryItem[] {
-    const data = localStorage.getItem(this.STORAGE_KEYS.inventory);
-    return data ? JSON.parse(data) : [
-      { id: 1, name: 'Paracetamol 500mg', category: 'Analgésicos', stock: 150, minStock: 20, unitPrice: 25.00, supplier: 'Farmacéutica Central', expirationDate: '2028-12-31' }
-    ];
-  }
-
-  saveInventory(inventory: InventoryItem[]): void {
-    localStorage.setItem(this.STORAGE_KEYS.inventory, JSON.stringify(inventory));
-  }
-
-  getInvoices(): Invoice[] {
-    const data = localStorage.getItem(this.STORAGE_KEYS.invoices);
-    return data ? JSON.parse(data) : [
-      { id: 1, patientName: 'Juan Pérez', concept: 'Consulta General y Receta', amount: 300.00, date: '2026-09-28', status: 'Pagada' },
-      { id: 2, patientName: 'Ana Lucía Gómez', concept: 'Exámenes de Laboratorio', amount: 450.00, date: '2026-09-27', status: 'Pendiente' }
-    ];
-  }
-
-  saveInvoices(invoices: Invoice[]): void {
-    localStorage.setItem(this.STORAGE_KEYS.invoices, JSON.stringify(invoices));
+  constructor(http: HttpClient) {
+    this.patients = new Resource<Patient>(http, `${API_URL}/patients`);
+    this.appointments = new Resource<Appointment>(http, `${API_URL}/appointments`);
+    this.inventory = new Resource<InventoryItem>(http, `${API_URL}/inventory`);
+    this.invoices = new Resource<Invoice>(http, `${API_URL}/invoices`);
   }
 }

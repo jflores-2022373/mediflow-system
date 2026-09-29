@@ -1,2 +1,19 @@
-backend/node_modules/ 
-frontend/node_modules/ 
+# Dependencias
+node_modules/
+
+# Variables de entorno (contienen secretos)
+.env
+!.env.example
+
+# Base de datos local
+backend/prisma/*.db
+backend/prisma/*.db-journal
+
+# Build y caché de Angular
+frontend/dist/
+frontend/.angular/
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+*.log

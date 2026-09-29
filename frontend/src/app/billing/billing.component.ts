@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MediflowService, Invoice } from '../services/mediflow.service';
+import { apiErrorMessage, todayLocal } from '../config';
 
 @Component({
   selector: 'app-billing',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [CommonModule, FormsModule],
   templateUrl: './billing.component.html',
   styleUrls: ['./billing.component.css']
@@ -18,13 +20,7 @@ export class BillingComponent implements OnInit {
 
   invoices: Invoice[] = [];
 
-  newInvoice: Partial<Invoice> = {
-    patientName: '',
-    concept: '',
-    amount: 0,
-    date: new Date().toISOString().split('T')[0],
-    status: 'Pagada'
-  };
+  newInvoice: Partial<Invoice> = {};
 
   constructor(private mediflowService: MediflowService) {}
 
@@ -33,7 +29,10 @@ export class BillingComponent implements OnInit {
   }
 
   loadInvoices(): void {
-    this.invoices = this.mediflowService.getInvoices();
+    this.mediflowService.invoices.list().subscribe({
+      next: invoices => this.invoices = invoices,
+      error: err => alert(apiErrorMessage(err, 'No se pudieron cargar las facturas.'))
+    });
   }
 
   get filteredInvoices(): Invoice[] {
@@ -41,7 +40,7 @@ export class BillingComponent implements OnInit {
       return this.invoices;
     }
     const term = this.searchTerm.toLowerCase();
-    return this.invoices.filter(inv => 
+    return this.invoices.filter(inv =>
       inv.patientName.toLowerCase().includes(term) ||
       inv.concept.toLowerCase().includes(term) ||
       inv.status.toLowerCase().includes(term)
@@ -55,7 +54,7 @@ export class BillingComponent implements OnInit {
       patientName: '',
       concept: '',
       amount: 0,
-      date: new Date().toISOString().split('T')[0],
+      date: todayLocal(),
       status: 'Pagada'
     };
     this.showModal = true;
@@ -73,37 +72,30 @@ export class BillingComponent implements OnInit {
   }
 
   saveInvoice(): void {
-    if (!this.newInvoice.patientName || !this.newInvoice.concept) {
+    if (!this.newInvoice.patientName?.trim() || !this.newInvoice.concept?.trim()) {
       alert('Por favor complete el nombre del paciente y el concepto.');
       return;
     }
 
-    if (this.isEditMode && this.editingId !== null) {
-      const index = this.invoices.findIndex(i => i.id === this.editingId);
-      if (index !== -1) {
-        this.invoices[index] = { ...this.newInvoice } as Invoice;
-      }
-    } else {
-      const newId = this.invoices.length > 0 ? Math.max(...this.invoices.map(i => i.id)) + 1 : 1;
-      const invoiceToAdd: Invoice = {
-        id: newId,
-        patientName: this.newInvoice.patientName || '',
-        concept: this.newInvoice.concept || '',
-        amount: Number(this.newInvoice.amount) || 0,
-        date: this.newInvoice.date || new Date().toISOString().split('T')[0],
-        status: this.newInvoice.status || 'Pagada'
-      };
-      this.invoices.push(invoiceToAdd);
-    }
+    const request = this.isEditMode && this.editingId !== null
+      ? this.mediflowService.invoices.update(this.editingId, this.newInvoice)
+      : this.mediflowService.invoices.create(this.newInvoice);
 
-    this.mediflowService.saveInvoices(this.invoices);
-    this.closeModal();
+    request.subscribe({
+      next: () => {
+        this.closeModal();
+        this.loadInvoices();
+      },
+      error: err => alert(apiErrorMessage(err, 'No se pudo guardar la factura.'))
+    });
   }
 
   deleteInvoice(id: number): void {
     if (confirm('¿Está seguro de eliminar esta factura?')) {
-      this.invoices = this.invoices.filter(i => i.id !== id);
-      this.mediflowService.saveInvoices(this.invoices);
+      this.mediflowService.invoices.remove(id).subscribe({
+        next: () => this.invoices = this.invoices.filter(i => i.id !== id),
+        error: err => alert(apiErrorMessage(err, 'No se pudo eliminar la factura.'))
+      });
     }
   }
 

@@ -109,7 +109,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of lowStockItems">
+            <tr *ngFor="let item of inventoryItems">
               <td><strong>{{ item.name }}</strong></td>
               <td>
                 <span [ngClass]="{'badge-low': item.stock <= item.minStock, 'badge-ok': item.stock > item.minStock}">
@@ -118,7 +118,7 @@
               </td>
               <td>{{ item.minStock }} unids.</td>
             </tr>
-            <tr *ngIf="lowStockItems.length === 0">
+            <tr *ngIf="inventoryItems.length === 0">
               <td colspan="3" class="no-results">No hay insumos registrados.</td>
             </tr>
           </tbody>

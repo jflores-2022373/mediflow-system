@@ -65,29 +65,9 @@ html, body {
   justify-content: center;
 }
 
-/* Estilo alternativo por si usas botón manual de Google */
-.btn-google {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #ffffff;
-  color: #374151;
-  border: 1px solid #374151;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-  box-sizing: border-box;
-  margin-bottom: 1.5rem;
-}
-
-.btn-google:hover {
-  background-color: #f3f4f6;
-  transform: translateY(-2px);
+.google-loading {
+  color: #9ca3af;
+  font-size: 0.85rem;
 }
 
 .divider {
@@ -156,8 +136,23 @@ html, body {
   margin-top: 0.5rem;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   background: linear-gradient(135deg, #e5c158 0%, #b88e0b 100%);
   box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.login-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
 }

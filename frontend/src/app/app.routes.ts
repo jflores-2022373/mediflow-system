@@ -14,8 +14,15 @@ const authGuard = () => {
   return authService.isLoggedIn() || router.createUrlTree(['/login']);
 };
 
+// Evita mostrar el login a quien ya tiene una sesión válida
+const guestGuard = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  return !authService.isLoggedIn() || router.createUrlTree(['/dashboard']);
+};
+
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
+  { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
   { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
   { path: 'patients', component: PatientsComponent, canActivate: [authGuard] },
   { path: 'appointments', component: AppointmentsComponent, canActivate: [authGuard] },

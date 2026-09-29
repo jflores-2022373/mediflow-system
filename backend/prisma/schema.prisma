@@ -7,16 +7,25 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  name         String?
+  passwordHash String?
+  googleId     String?  @unique
+  createdAt    DateTime @default(now())
+}
+
 model Patient {
-  id        Int      @id @default(autoincrement())
-  name      String
-  age       Int
-  phone     String
-  email     String
-  gender    String
-  blood     String?  @default("O+")
-  status    String?  @default("Activo")
-  createdAt DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  fullName        String
+  age             Int
+  gender          String
+  phone           String
+  bloodType       String   @default("O+")
+  consultationFee Float    @default(0)
+  status          String   @default("Activo")
+  createdAt       DateTime @default(now())
 }
 
 model InventoryItem {
@@ -24,27 +33,32 @@ model InventoryItem {
   name           String
   category       String
   stock          Int
+  minStock       Int      @default(20)
   unitPrice      Float
   supplier       String
-  expirationDate String
+  expirationDate String?
   createdAt      DateTime @default(now())
 }
 
 model Appointment {
   id          Int      @id @default(autoincrement())
   patientName String
-  doctor      String
+  doctorName  String
+  specialty   String
   date        String
   time        String
-  status      String
+  phone       String
+  fee         Float    @default(0)
+  status      String   @default("Confirmada")
   createdAt   DateTime @default(now())
 }
 
 model Invoice {
   id          Int      @id @default(autoincrement())
   patientName String
-  total       Float
+  concept     String
+  amount      Float
   date        String
-  status      String
+  status      String   @default("Pagada")
   createdAt   DateTime @default(now())
 }

@@ -1,11 +1,13 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MediflowService, Patient } from '../services/mediflow.service';
+import { apiErrorMessage } from '../config';
 
 @Component({
   selector: 'app-patients',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [CommonModule, FormsModule],
   templateUrl: './patients.component.html',
   styleUrls: ['./patients.component.css']
@@ -18,28 +20,19 @@ export class PatientsComponent implements OnInit {
 
   patients: Patient[] = [];
 
-  newPatient: Partial<Patient> = {
-    fullName: '',
-    age: 0,
-    gender: 'Masculino',
-    phone: '',
-    bloodType: 'O+',
-    consultationFee: 0,
-    status: 'Activo'
-  };
+  newPatient: Partial<Patient> = {};
 
-  constructor(
-    private mediflowService: MediflowService,
-    private cdr: ChangeDetectorRef // <--- Forzamos el renderizado instantáneo
-  ) {}
+  constructor(private mediflowService: MediflowService) {}
 
   ngOnInit(): void {
     this.loadPatients();
   }
 
   loadPatients(): void {
-    this.patients = this.mediflowService.getPatients();
-    this.cdr.detectChanges(); // <--- Obliga a Angular a mostrar los datos al instante sin requerir clics
+    this.mediflowService.patients.list().subscribe({
+      next: patients => this.patients = patients,
+      error: err => alert(apiErrorMessage(err, 'No se pudieron cargar los pacientes.'))
+    });
   }
 
   get filteredPatients(): Patient[] {
@@ -47,7 +40,7 @@ export class PatientsComponent implements OnInit {
       return this.patients;
     }
     const term = this.searchTerm.toLowerCase();
-    return this.patients.filter(p => 
+    return this.patients.filter(p =>
       p.fullName.toLowerCase().includes(term) ||
       p.phone.toLowerCase().includes(term)
     );
@@ -80,41 +73,30 @@ export class PatientsComponent implements OnInit {
   }
 
   savePatient(): void {
-    if (!this.newPatient.fullName || !this.newPatient.phone) {
+    if (!this.newPatient.fullName?.trim() || !this.newPatient.phone?.trim()) {
       alert('Por favor ingrese el nombre y el teléfono del paciente.');
       return;
     }
 
-    if (this.isEditMode && this.editingId !== null) {
-      const index = this.patients.findIndex(p => p.id === this.editingId);
-      if (index !== -1) {
-        this.patients[index] = { ...this.newPatient } as Patient;
-      }
-    } else {
-      const newId = this.patients.length > 0 ? Math.max(...this.patients.map(p => p.id)) + 1 : 1;
-      const patientToAdd: Patient = {
-        id: newId,
-        fullName: this.newPatient.fullName || '',
-        age: Number(this.newPatient.age) || 0,
-        gender: (this.newPatient.gender as any) || 'Masculino',
-        phone: this.newPatient.phone || '+502 0000-0000',
-        bloodType: this.newPatient.bloodType || 'O+',
-        consultationFee: Number(this.newPatient.consultationFee) || 0,
-        status: (this.newPatient.status as any) || 'Activo'
-      };
-      this.patients.push(patientToAdd);
-    }
+    const request = this.isEditMode && this.editingId !== null
+      ? this.mediflowService.patients.update(this.editingId, this.newPatient)
+      : this.mediflowService.patients.create(this.newPatient);
 
-    this.mediflowService.savePatients(this.patients);
-    this.closeModal();
-    this.cdr.detectChanges();
+    request.subscribe({
+      next: () => {
+        this.closeModal();
+        this.loadPatients();
+      },
+      error: err => alert(apiErrorMessage(err, 'No se pudo guardar el paciente.'))
+    });
   }
 
   deletePatient(id: number): void {
     if (confirm('¿Está seguro de eliminar este expediente clínico?')) {
-      this.patients = this.patients.filter(p => p.id !== id);
-      this.mediflowService.savePatients(this.patients);
-      this.cdr.detectChanges();
+      this.mediflowService.patients.remove(id).subscribe({
+        next: () => this.patients = this.patients.filter(p => p.id !== id),
+        error: err => alert(apiErrorMessage(err, 'No se pudo eliminar el paciente.'))
+      });
     }
   }
 

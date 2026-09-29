@@ -1,75 +1,106 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { ChangeDetectionStrategy, Component, AfterViewInit, OnDestroy, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { GOOGLE_CLIENT_ID, apiErrorMessage } from '../config';
 
 // Declaración para que TypeScript reconozca el objeto global de Google
 declare var google: any;
 
+const GOOGLE_INIT_MAX_RETRIES = 20;
+
 @Component({
   selector: 'app-login',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('googleButton') googleButton?: ElementRef<HTMLDivElement>;
+
   email: string = '';
   password: string = '';
+  errorMessage: string = '';
+  loading: boolean = false;
+  googleReady: boolean = false;
+
+  private retryTimer?: ReturnType<typeof setTimeout>;
 
   constructor(
-    public authService: AuthService, 
-    private ngZone: NgZone,
-    private router: Router
+    private authService: AuthService,
+    private ngZone: NgZone
   ) {}
 
-  ngOnInit(): void {
-    this.initGoogleClient();
+  ngAfterViewInit(): void {
+    // Se difiere para no modificar el estado de la vista durante su propio ciclo de renderizado
+    this.retryTimer = setTimeout(() => this.initGoogleClient());
   }
 
-  // Inicializa el sistema de Google Sign-In de forma segura
-  initGoogleClient(): void {
-    if (typeof google !== 'undefined' && google.accounts) {
+  ngOnDestroy(): void {
+    clearTimeout(this.retryTimer);
+  }
+
+  // Inicializa Google Sign-In y dibuja el botón oficial;
+  // reintenta mientras la librería de Google termina de cargar
+  initGoogleClient(attempt: number = 0): void {
+    if (typeof google !== 'undefined' && google.accounts?.id && this.googleButton) {
       google.accounts.id.initialize({
-        client_id: '856400933592-cmkhp584h7heggcdjj1c7n24o18442id.apps.googleusercontent.com',
+        client_id: GOOGLE_CLIENT_ID,
         callback: (response: any) => this.handleGoogleResponse(response)
       });
-    } else {
-      // Reintenta si la librería de Google tarda unos milisegundos en cargar
-      setTimeout(() => this.initGoogleClient(), 300);
-    }
-  }
 
-  // Esta función se ejecuta al hacer clic en el botón personalizado fijo
-  loginWithGoogle(): void {
-    if (typeof google !== 'undefined' && google.accounts) {
-      // Abre el popup oficial de selección de cuentas de Google
-      google.accounts.id.prompt((notification: any) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // Si el navegador bloquea el prompt automático, invocamos el flujo manual o alertamos
-          console.log('Prompt de Google no mostrado, usando flujo alternativo');
-        }
+      const width = Math.min(400, this.googleButton.nativeElement.parentElement?.clientWidth || 320);
+      google.accounts.id.renderButton(this.googleButton.nativeElement, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'continue_with',
+        shape: 'pill',
+        locale: 'es',
+        width
       });
+
+      this.ngZone.run(() => this.googleReady = true);
+    } else if (attempt < GOOGLE_INIT_MAX_RETRIES) {
+      this.retryTimer = setTimeout(() => this.initGoogleClient(attempt + 1), 300);
     } else {
-      alert('El servicio de Google no está disponible en este momento. Verifica tu conexión.');
+      this.ngZone.run(() => {
+        this.errorMessage = 'No se pudo cargar el acceso con Google. Verifica tu conexión o usa tu correo.';
+      });
     }
   }
 
-  // Maneja la respuesta del token que te da Google al iniciar sesión con éxito
+  // Envía el token de Google al backend, que lo verifica antes de abrir sesión
   handleGoogleResponse(response: any): void {
     this.ngZone.run(() => {
-      console.log('Token de Google recibido:', response.credential);
-      // Aquí llamas a tu servicio para validar el token en el backend o entrar a la app
-      this.authService.loginWithGoogle(); 
+      this.errorMessage = '';
+      this.loading = true;
+      this.authService.loginWithGoogle(response.credential).subscribe({
+        next: () => this.loading = false,
+        error: err => {
+          this.loading = false;
+          this.errorMessage = apiErrorMessage(err, 'No se pudo iniciar sesión con Google.');
+        }
+      });
     });
   }
 
-  onSubmit() {
-    if (this.email && this.password) {
-      this.authService.loginWithEmail(this.email, this.password);
-    } else {
-      alert('Por favor ingrese un correo y contraseña válidos.');
+  onSubmit(): void {
+    this.errorMessage = '';
+    if (!this.email || !this.password) {
+      this.errorMessage = 'Por favor ingrese un correo y contraseña válidos.';
+      return;
     }
+
+    this.loading = true;
+    this.authService.loginWithEmail(this.email, this.password).subscribe({
+      next: () => this.loading = false,
+      error: err => {
+        this.loading = false;
+        this.errorMessage = apiErrorMessage(err, 'No se pudo iniciar sesión.');
+      }
+    });
   }
 }

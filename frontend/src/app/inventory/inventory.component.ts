@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MediflowService, InventoryItem } from '../services/mediflow.service';
+import { apiErrorMessage } from '../config';
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [CommonModule, FormsModule],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.css']
@@ -18,15 +20,7 @@ export class InventoryComponent implements OnInit {
 
   medicines: InventoryItem[] = [];
 
-  newMedicine: Partial<InventoryItem> = {
-    name: '',
-    category: 'Analgésicos',
-    stock: 0,
-    minStock: 20,
-    unitPrice: 0,
-    supplier: '',
-    expirationDate: ''
-  };
+  newMedicine: Partial<InventoryItem> = {};
 
   constructor(private mediflowService: MediflowService) {}
 
@@ -35,7 +29,10 @@ export class InventoryComponent implements OnInit {
   }
 
   loadMedicines(): void {
-    this.medicines = this.mediflowService.getInventory();
+    this.mediflowService.inventory.list().subscribe({
+      next: items => this.medicines = items,
+      error: err => alert(apiErrorMessage(err, 'No se pudo cargar el inventario.'))
+    });
   }
 
   get filteredMedicines(): InventoryItem[] {
@@ -43,11 +40,15 @@ export class InventoryComponent implements OnInit {
       return this.medicines;
     }
     const term = this.searchTerm.toLowerCase();
-    return this.medicines.filter(med => 
+    return this.medicines.filter(med =>
       med.name.toLowerCase().includes(term) ||
       med.category.toLowerCase().includes(term) ||
       med.supplier.toLowerCase().includes(term)
     );
+  }
+
+  isLowStock(med: InventoryItem): boolean {
+    return med.stock <= med.minStock;
   }
 
   openModal(): void {
@@ -77,43 +78,34 @@ export class InventoryComponent implements OnInit {
   }
 
   saveMedicine(): void {
-    if (!this.newMedicine.name) {
-      alert('Por favor ingrese el nombre del medicamento o insumo.');
+    if (!this.newMedicine.name?.trim() || !this.newMedicine.supplier?.trim()) {
+      alert('Por favor ingrese el nombre del medicamento y el proveedor.');
       return;
     }
 
-    if (this.isEditMode && this.editingId !== null) {
-      const index = this.medicines.findIndex(m => m.id === this.editingId);
-      if (index !== -1) {
-        this.medicines[index] = { ...this.newMedicine } as InventoryItem;
-      }
-    } else {
-      const newId = this.medicines.length > 0 ? Math.max(...this.medicines.map(m => m.id)) + 1 : 1;
-      const medicineToAdd: InventoryItem = {
-        id: newId,
-        name: this.newMedicine.name || '',
-        category: this.newMedicine.category || 'Analgésicos',
-        stock: Number(this.newMedicine.stock) || 0,
-        minStock: 20,
-        unitPrice: Number(this.newMedicine.unitPrice) || 0,
-        supplier: this.newMedicine.supplier || 'Proveedor General',
-        expirationDate: this.newMedicine.expirationDate || '2027-01-01'
-      };
-      this.medicines.push(medicineToAdd);
-    }
+    const request = this.isEditMode && this.editingId !== null
+      ? this.mediflowService.inventory.update(this.editingId, this.newMedicine)
+      : this.mediflowService.inventory.create(this.newMedicine);
 
-    this.mediflowService.saveInventory(this.medicines);
-    this.closeModal();
+    request.subscribe({
+      next: () => {
+        this.closeModal();
+        this.loadMedicines();
+      },
+      error: err => alert(apiErrorMessage(err, 'No se pudo guardar el medicamento.'))
+    });
   }
 
   deleteMedicine(id: number): void {
     if (confirm('¿Está seguro de eliminar este medicamento del inventario?')) {
-      this.medicines = this.medicines.filter(m => m.id !== id);
-      this.mediflowService.saveInventory(this.medicines);
+      this.mediflowService.inventory.remove(id).subscribe({
+        next: () => this.medicines = this.medicines.filter(m => m.id !== id),
+        error: err => alert(apiErrorMessage(err, 'No se pudo eliminar el medicamento.'))
+      });
     }
   }
 
   getLowStockCount(): number {
-    return this.medicines.filter(m => m.stock < 20).length;
+    return this.medicines.filter(m => this.isLowStock(m)).length;
   }
 }
