@@ -1,0 +1,50 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Patient {
+  id        Int      @id @default(autoincrement())
+  name      String
+  age       Int
+  phone     String
+  email     String
+  gender    String
+  blood     String?  @default("O+")
+  status    String?  @default("Activo")
+  createdAt DateTime @default(now())
+}
+
+model InventoryItem {
+  id             Int      @id @default(autoincrement())
+  name           String
+  category       String
+  stock          Int
+  unitPrice      Float
+  supplier       String
+  expirationDate String
+  createdAt      DateTime @default(now())
+}
+
+model Appointment {
+  id          Int      @id @default(autoincrement())
+  patientName String
+  doctor      String
+  date        String
+  time        String
+  status      String
+  createdAt   DateTime @default(now())
+}
+
+model Invoice {
+  id          Int      @id @default(autoincrement())
+  patientName String
+  total       Float
+  date        String
+  status      String
+  createdAt   DateTime @default(now())
+}

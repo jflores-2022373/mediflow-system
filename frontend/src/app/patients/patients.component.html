@@ -1,0 +1,186 @@
+<div class="patients-container">
+  <!-- Cabecera -->
+  <div class="header-section">
+    <div>
+      <h2>Directorio de Pacientes</h2>
+      <p>Gestión avanzada de expedientes clínicos y control financiero</p>
+    </div>
+    <button class="btn-primary" (click)="openModal()">
+      <svg class="icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      Nuevo Paciente
+    </button>
+  </div>
+
+  <!-- Tarjetas de Estadísticas -->
+  <div class="stats-grid">
+    <div class="stat-card card-total">
+      <div class="stat-info">
+        <span class="stat-label">Total Pacientes</span>
+        <h3 class="stat-value">{{ patients.length }}</h3>
+      </div>
+      <div class="stat-icon-wrapper">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      </div>
+    </div>
+
+    <div class="stat-card card-observation">
+      <div class="stat-info">
+        <span class="stat-label">En Observación</span>
+        <h3 class="stat-value">{{ getObservationCount() }}</h3>
+      </div>
+      <div class="stat-icon-wrapper">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+    </div>
+
+    <div class="stat-card card-discharged">
+      <div class="stat-info">
+        <span class="stat-label">Altas Médicas</span>
+        <h3 class="stat-value">{{ getDischargedCount() }}</h3>
+      </div>
+      <div class="stat-icon-wrapper">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de Búsqueda -->
+  <div class="toolbar">
+    <div class="search-box">
+      <svg class="search-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por nombre o teléfono (+502)..." class="search-input"/>
+    </div>
+  </div>
+
+  <!-- TABLA DE PACIENTES -->
+  <div class="table-card">
+    <div class="table-responsive">
+      <table class="fixed-table">
+        <thead>
+          <tr>
+            <th># ID</th>
+            <th>Paciente</th>
+            <th>Edad</th>
+            <th>Género</th>
+            <th>Teléfono</th>
+            <th>Sangre</th>
+            <th>Consulta (Q)</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let patient of filteredPatients" class="table-row">
+            <td><strong>#{{ patient.id }}</strong></td>
+            <td>
+              <div class="patient-name-wrapper">
+                <div class="avatar-mini">{{ patient.fullName.charAt(0) }}</div>
+                <span>{{ patient.fullName }}</span>
+              </div>
+            </td>
+            <td>{{ patient.age }} años</td>
+            <td>{{ patient.gender }}</td>
+            <td><code>{{ patient.phone }}</code></td>
+            <td><span class="badge-blood">{{ patient.bloodType }}</span></td>
+            <td><strong>Q {{ patient.consultationFee | number:'1.2-2' }}</strong></td>
+            <td>
+              <span class="status-badge" [ngClass]="{
+                'active': patient.status === 'Activo',
+                'observation': patient.status === 'En Observación',
+                'discharged': patient.status === 'Alta'
+              }">
+                {{ patient.status }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-action edit" (click)="editPatient(patient)" title="Editar">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.862 4.487z"/></svg>
+                </button>
+                <button class="btn-action delete" (click)="deletePatient(patient.id)" title="Eliminar">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredPatients.length === 0" class="empty-row">
+            <td colspan="9" class="no-results-cell">
+              <div class="empty-state-content">
+                <svg class="empty-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                <span>No se encontraron expedientes registrados en el sistema.</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal (Crear / Editar Paciente) -->
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ isEditMode ? 'Editar Expediente de Paciente' : 'Registrar Nuevo Paciente' }}</h3>
+        <button class="close-btn" (click)="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nombre Completo</label>
+          <input type="text" [(ngModel)]="newPatient.fullName" placeholder="Ej. Juan Pérez" class="form-input" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Edad</label>
+            <input type="number" [(ngModel)]="newPatient.age" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label>Género</label>
+            <select [(ngModel)]="newPatient.gender" class="form-input">
+              <option value="Masculino">Masculino</option>
+              <option value="Femenino">Femenino</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Teléfono (Guatemala)</label>
+            <input type="text" [(ngModel)]="newPatient.phone" placeholder="+502 0000-0000" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label>Tipo de Sangre</label>
+            <select [(ngModel)]="newPatient.bloodType" class="form-input">
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tarifa Consulta (Q - Quetzales)</label>
+            <input type="number" [(ngModel)]="newPatient.consultationFee" class="form-input" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group">
+            <label>Estado Clínico</label>
+            <select [(ngModel)]="newPatient.status" class="form-input">
+              <option value="Activo">Activo</option>
+              <option value="En Observación">En Observación</option>
+              <option value="Alta">Alta</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn-primary" (click)="savePatient()">{{ isEditMode ? 'Actualizar Cambios' : 'Guardar Paciente' }}</button>
+      </div>
+    </div>
+  </div>
+</div>

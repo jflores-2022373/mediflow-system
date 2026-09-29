@@ -1,0 +1,156 @@
+<div class="invoice-container">
+  <!-- Cabecera -->
+  <div class="header-section">
+    <div>
+      <h2>Control de Facturación e Ingresos</h2>
+      <p>Gestión de cobros, consultas y estado de cuentas en Quetzales (Q)</p>
+    </div>
+    <button class="btn-primary" (click)="openModal()">
+      <svg class="icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      Nueva Factura
+    </button>
+  </div>
+
+  <!-- Tarjetas de Estadísticas -->
+  <div class="stats-grid">
+    <div class="stat-card card-total">
+      <div class="stat-info">
+        <span class="stat-label">Ingresos Totales (Pagados)</span>
+        <h3 class="stat-value">Q {{ getTotalIncome() | number:'1.2-2' }}</h3>
+      </div>
+      <div class="stat-icon-wrapper">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <div class="stat-card card-observation">
+      <div class="stat-info">
+        <span class="stat-label">Facturas Pendientes</span>
+        <h3 class="stat-value">{{ getPendingCount() }}</h3>
+      </div>
+      <div class="stat-icon-wrapper">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <div class="stat-card card-discharged">
+      <div class="stat-info">
+        <span class="stat-label">Total Emisiones</span>
+        <h3 class="stat-value">{{ invoices.length }}</h3>
+      </div>
+      <div class="stat-icon-wrapper">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de Búsqueda -->
+  <div class="toolbar">
+    <div class="search-box">
+      <svg class="search-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por paciente, concepto o estado..." class="search-input"/>
+    </div>
+  </div>
+
+  <!-- Tabla Profesional -->
+  <div class="table-card">
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th># Factura</th>
+            <th>Paciente</th>
+            <th>Concepto</th>
+            <th>Monto (Q)</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let inv of filteredInvoices" class="table-row">
+            <td><strong>#FAC-{{ inv.id }}</strong></td>
+            <td>
+              <div class="med-name-wrapper">
+                <div class="avatar-mini">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                </div>
+                <span>{{ inv.patientName }}</span>
+              </div>
+            </td>
+            <td>{{ inv.concept }}</td>
+            <td><strong>Q {{ inv.amount | number:'1.2-2' }}</strong></td>
+            <td><code>{{ inv.date }}</code></td>
+            <td>
+              <span class="status-badge" [ngClass]="{
+                'optimal': inv.status === 'Pagada',
+                'low': inv.status === 'Pendiente',
+                'cancelled': inv.status === 'Anulada'
+              }">
+                {{ inv.status }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-action edit" (click)="editInvoice(inv)" title="Editar">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.862 4.487z"/></svg>
+                </button>
+                <button class="btn-action delete" (click)="deleteInvoice(inv.id)" title="Eliminar">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredInvoices.length === 0">
+            <td colspan="7" class="no-results-cell">
+              <div class="empty-state-content">
+                <svg class="empty-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>No se encontraron facturas registradas.</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ isEditMode ? 'Editar Factura' : 'Emitir Nueva Factura' }}</h3>
+        <button class="close-btn" (click)="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nombre del Paciente</label>
+          <input type="text" [(ngModel)]="newInvoice.patientName" placeholder="Ej. Juan Pérez" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Concepto del Servicio o Producto</label>
+          <input type="text" [(ngModel)]="newInvoice.concept" placeholder="Ej. Consulta General y Receta" class="form-input" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Monto Total (Q - Quetzales)</label>
+            <input type="number" [(ngModel)]="newInvoice.amount" class="form-input" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>Fecha de Emisión</label>
+            <input type="date" [(ngModel)]="newInvoice.date" class="form-input" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Estado de Pago</label>
+          <select [(ngModel)]="newInvoice.status" class="form-input">
+            <option value="Pagada">Pagada</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Anulada">Anulada</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn-primary" (click)="saveInvoice()">{{ isEditMode ? 'Actualizar Factura' : 'Guardar Factura' }}</button>
+      </div>
+    </div>
+  </div>
+</div>

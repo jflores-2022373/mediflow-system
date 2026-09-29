@@ -1,0 +1,297 @@
+.dashboard-container {
+  padding: 2.5rem;
+  background: #0b0f17; /* Fondo general oscuro y profundo */
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #f3f4f6;
+}
+
+.header-section {
+  margin-bottom: 2rem;
+}
+
+.header-section h2 {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.4rem 0;
+  letter-spacing: -0.025em;
+}
+
+.header-section p {
+  color: #9ca3af;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Tarjetas de Estadísticas Principales */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: #111827;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #1f2937;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  border-color: #d4af37; /* Toque dorado elegante al pasar el cursor */
+  box-shadow: 0 15px 25px -5px rgba(212, 175, 55, 0.1);
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #9ca3af;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.stat-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-icon.gold {
+  background: linear-gradient(135deg, #d4af37 0%, #aa820a 100%);
+  color: #111827;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.stat-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Gráficas */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media(max-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  background: #111827;
+  padding: 1.75rem;
+  border-radius: 1rem;
+  border: 1px solid #1f2937;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.3s ease;
+}
+
+.chart-card:hover {
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.chart-card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-top: 0;
+  margin-bottom: 1.2rem;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 280px;
+  width: 100%;
+}
+
+.doughnut-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+/* Scroll Horizontal para la Gráfica de Barras */
+.chart-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+}
+
+.chart-scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.chart-scroll-container::-webkit-scrollbar-track {
+  background: #0f172a;
+  border-radius: 4px;
+}
+
+.chart-scroll-container::-webkit-scrollbar-thumb {
+  background: #d4af37; /* Barra de desplazamiento en tono dorado */
+  border-radius: 4px;
+}
+
+.chart-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #e5c158;
+}
+
+.chart-inner-wrapper {
+  position: relative;
+  height: 280px;
+}
+
+.scroll-hint {
+  text-align: right;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Tablas Compactas con Scroll Vertical */
+.tables-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media(max-width: 1024px) {
+  .tables-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.table-card {
+  background: #111827;
+  padding: 1.75rem;
+  border-radius: 1rem;
+  border: 1px solid #1f2937;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+}
+
+.table-card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-top: 0;
+  margin-bottom: 1.2rem;
+}
+
+.table-container-scroll {
+  max-height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid #1f2937;
+  background: #0f172a;
+}
+
+.table-container-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.table-container-scroll::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+.table-container-scroll::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 4px;
+}
+
+.table-container-scroll::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th {
+  background-color: #1f2937;
+  color: #d4af37; /* Cabeceras de tabla en tono dorado profesional */
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid #374151;
+}
+
+td {
+  padding: 0.9rem 1rem;
+  color: #e5e7eb;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #1f2937;
+}
+
+tr:hover td {
+  background-color: rgba(212, 175, 55, 0.04);
+}
+
+code {
+  background-color: #1f2937;
+  color: #d4af37;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.35rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  border: 1px solid #374151;
+}
+
+/* Alertas y Badges profesionales (Rojo elegante para stock bajo y Verde para stock óptimo) */
+.badge-low {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.35rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.badge-ok {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.35rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.no-results {
+  text-align: center;
+  color: #9ca3af;
+  padding: 2rem !important;
+  font-style: italic;
+}

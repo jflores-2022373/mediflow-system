@@ -1,0 +1,163 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: #0b0f17;
+  height: 100%;
+  width: 100%;
+}
+
+.login-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0b0f17;
+  font-family: 'Inter', system-ui, sans-serif;
+  box-sizing: border-box;
+  padding: 1rem;
+}
+
+.login-card {
+  background: #111827;
+  padding: 2.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  border: 1px solid #1f2937;
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.login-header p {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  margin-top: 0.5rem;
+}
+
+.google-btn-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Forzar que el iframe del botón oficial de Google ocupe todo el ancho de la tarjeta */
+.google-btn-wrapper > div {
+  width: 100% !important;
+  display: flex;
+  justify-content: center;
+}
+
+/* Estilo alternativo por si usas botón manual de Google */
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #374151;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  box-sizing: border-box;
+  margin-bottom: 1.5rem;
+}
+
+.btn-google:hover {
+  background-color: #f3f4f6;
+  transform: translateY(-2px);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: #6b7280;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #374151;
+}
+
+.divider span {
+  padding: 0 10px;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #9ca3af;
+  margin-bottom: 0.4rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #374151;
+  background-color: #0f172a;
+  color: #f3f4f6;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #d4af37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, #d4af37 0%, #aa820a 100%);
+  color: #111827;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #e5c158 0%, #b88e0b 100%);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+}

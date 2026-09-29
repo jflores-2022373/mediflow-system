@@ -1,0 +1,173 @@
+<div class="inventory-container">
+  <!-- Cabecera -->
+  <div class="header-section">
+    <div>
+      <h2>Control de Inventario y Farmacia</h2>
+      <p>Gestión de insumos médicos, existencias y precios en Quetzales (Q)</p>
+    </div>
+    <button class="btn-primary" (click)="openModal()">
+      <svg class="icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      Nuevo Medicamento
+    </button>
+  </div>
+
+  <!-- Tarjetas de Estadísticas -->
+  <div class="stats-grid">
+    <div class="stat-card card-total">
+      <div class="stat-info">
+        <span class="stat-label">Total Insumos</span>
+        <h3 class="stat-value">{{ medicines.length }}</h3>
+      </div>
+      <div class="stat-icon-wrapper">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      </div>
+    </div>
+
+    <div class="stat-card card-observation">
+      <div class="stat-info">
+        <span class="stat-label">Stock Bajo / Crítico</span>
+        <h3 class="stat-value">{{ getLowStockCount() }}</h3>
+      </div>
+      <div class="stat-icon-wrapper">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+    </div>
+
+    <div class="stat-card card-discharged">
+      <div class="stat-info">
+        <span class="stat-label">Proveedores Activos</span>
+        <h3 class="stat-value">4</h3>
+      </div>
+      <div class="stat-icon-wrapper">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de Búsqueda -->
+  <div class="toolbar">
+    <div class="search-box">
+      <svg class="search-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por medicina, categoría o proveedor..." class="search-input"/>
+    </div>
+  </div>
+
+  <!-- Tabla Profesional -->
+  <div class="table-card">
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th># ID</th>
+            <th>Medicamento</th>
+            <th>Categoría</th>
+            <th>Existencias</th>
+            <th>Precio Unitario (Q)</th>
+            <th>Proveedor</th>
+            <th>Vencimiento</th>
+            <th>Estado Stock</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let med of filteredMedicines" class="table-row">
+            <td><strong>#{{ med.id }}</strong></td>
+            <td>
+              <div class="med-name-wrapper">
+                <div class="avatar-mini">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-3-3v6m-9 3V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                </div>
+                <span>{{ med.name }}</span>
+              </div>
+            </td>
+            <td><span class="badge-category">{{ med.category }}</span></td>
+            <td>
+              <span [ngStyle]="{'font-weight': 'bold', 'color': med.stock < 20 ? '#f87171' : '#e5e7eb'}">
+                {{ med.stock }} unidades
+              </span>
+            </td>
+            <td><strong>Q {{ med.unitPrice | number:'1.2-2' }}</strong></td>
+            <td>{{ med.supplier }}</td>
+            <td><code>{{ med.expirationDate }}</code></td>
+            <td>
+              <span class="status-badge" [ngClass]="{
+                'optimal': med.stock >= 20,
+                'low': med.stock < 20
+              }">
+                {{ med.stock >= 20 ? 'Disponible' : 'Stock Bajo' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-action edit" (click)="editMedicine(med)" title="Editar">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.862 4.487z"/></svg>
+                </button>
+                <button class="btn-action delete" (click)="deleteMedicine(med.id)" title="Eliminar">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredMedicines.length === 0">
+            <td colspan="9" class="no-results-cell">
+              <div class="empty-state-content">
+                <svg class="empty-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                <span>No se encontraron medicamentos en el inventario.</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ isEditMode ? 'Editar Medicamento' : 'Registrar Nuevo Medicamento' }}</h3>
+        <button class="close-btn" (click)="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nombre del Medicamento y Concentración</label>
+          <input type="text" [(ngModel)]="newMedicine.name" placeholder="Ej. Acetaminofén 500mg" class="form-input" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Categoría</label>
+            <select [(ngModel)]="newMedicine.category" class="form-input">
+              <option value="Analgésicos">Analgésicos</option>
+              <option value="Antibióticos">Antibióticos</option>
+              <option value="Antiinflamatorios">Antiinflamatorios</option>
+              <option value="Antihistamínicos">Antihistamínicos</option>
+              <option value="Gastrointestinal">Gastrointestinal</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Existencias (Stock)</label>
+            <input type="number" [(ngModel)]="newMedicine.stock" class="form-input" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Precio Unitario (Q - Quetzales)</label>
+            <input type="number" [(ngModel)]="newMedicine.unitPrice" class="form-input" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>Fecha de Vencimiento</label>
+            <input type="date" [(ngModel)]="newMedicine.expirationDate" class="form-input" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Proveedor Farmacéutico</label>
+          <input type="text" [(ngModel)]="newMedicine.supplier" placeholder="Ej. Laboratorios Fórmula Q" class="form-input" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn-primary" (click)="saveMedicine()">{{ isEditMode ? 'Actualizar Cambios' : 'Guardar Insumo' }}</button>
+      </div>
+    </div>
+  </div>
+</div>
