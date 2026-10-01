@@ -2,7 +2,7 @@
 export const API_URL = 'http://localhost:4000/api';
 
 // Debe coincidir con GOOGLE_CLIENT_ID del backend (.env)
-export const GOOGLE_CLIENT_ID = '856400933592-cmkhp584h7heggcdjj1c7n24o18442id.apps.googleusercontent.com';
+export const GOOGLE_CLIENT_ID = '856400933592-9f2uq5s5km590uuh5g7u7udp9sp3o3ab.apps.googleusercontent.com';
 
 // Fecha de hoy en formato YYYY-MM-DD según la hora local (no UTC)
 export const todayLocal = (): string => {
